@@ -1,0 +1,20 @@
+<?xml version='1.0'?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping package="com.example.dictionary.Entity">
+
+    <class name="Words" table="words" schema="dictionary2">
+        <id name="id" type="java.lang.Integer" column="id" >
+            <generator class="identity" />
+        </id>
+        <property name="value" type="java.lang.String">
+            <column name="value" not-null="true"/>
+        </property>
+        <property name="type" type="java.lang.String">
+            <column name="type" not-null="true"/>
+        </property>
+    </class>
+
+</hibernate-mapping>
