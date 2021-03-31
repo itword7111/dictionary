@@ -1,20 +1,23 @@
 package com.example.dictionary.service;
 
-import com.example.dictionary.Entity.Words;
+import com.example.dictionary.entity.Word;
 
 import java.util.List;
 import java.util.Map;
 
 public interface DictionaryService {
-    Map<String,List<Words>> getWordByValue(String value);
-    Integer add(Words words);
+    Map<String,List<Word>> getWordsByTranslation(String translation);
+    Integer updateOrCreateWord(Word word);
 
-    Words get(Integer id);
+    Word getWordById(Integer wordId);
 
-    void deleteByKey(Integer id);
+    void deleteWord(Integer wordId);
 
-    Map<String,List<Words>> getAll();
+    Map<String,List<Word>> getAllWords();
 
-    void deleteValueByKey(Integer id,Integer wordId);
+    List<Word> getWordsByTranslationByType(String translation, String type);
+
+    void deleteTranslationByWord(Integer translationId, Integer wordId);
+    List<Word> getByWordValue(String value);
 
 }

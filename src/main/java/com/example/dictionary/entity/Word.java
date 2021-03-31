@@ -1,5 +1,7 @@
-package com.example.dictionary.Entity;
+package com.example.dictionary.entity;
 
+
+import com.example.dictionary.model.TypeOfDictionary;
 
 import javax.persistence.*;
 import java.util.Collection;
@@ -14,20 +16,15 @@ public class Word {
     @Column(name = "value")
     private String value;
     @Column(name = "type")
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private TypeOfDictionary type;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
-    @JoinColumn( name = "word_id")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "word_id")
     private Collection<Translation> keys;
 
     public Word() {
 
-    }
-
-    public Word(String value, String type, Collection<Translation> keys) {
-        this.value = value;
-        this.type = type;
-        this.keys = keys;
     }
 
     public void setId(Integer id) {
@@ -39,7 +36,13 @@ public class Word {
     }
 
     public void setType(String type) {
-        this.type = type;
+        for (TypeOfDictionary typeOfDictionary : TypeOfDictionary.values()
+        ) {
+            if (typeOfDictionary.toString().equals(type)) {
+                this.type = typeOfDictionary;
+                return;
+            }
+        }
     }
 
     public void setKeys(Collection<Translation> keys) {
@@ -55,6 +58,10 @@ public class Word {
     }
 
     public String getType() {
+        return type.toString();
+    }
+
+    public TypeOfDictionary getTypeEnum() {
         return type;
     }
 

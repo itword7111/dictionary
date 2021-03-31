@@ -1,92 +1,139 @@
 <%@ page import="java.util.HashMap" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<style><%@include file="/WEB-INF/jsp/style.css"%></style>
+
 <html>
 
-<jsp:directive.page contentType="text/html;charset=UTF-8" />
+<jsp:directive.page contentType="text/html;charset=UTF-8"/>
 <head>
-    <title>Dictionary</title></head>
+    <link href="<c:url value="/css/style.css" />" rel="stylesheet" type="text/css">
+    <title>Dictionary</title>
+</head>
 <body>
-<script src="http://code.jquery.com/jquery-1.10.2.min.js" type="text/javascript" ></script>//скачать
+<script src="http://code.jquery.com/jquery-1.10.2.min.js" type="text/javascript"></script>
 <script>
-    var selected=0;
-    function remove(id){
+    const href = '${pageContext.request.scheme}' + '://' + '${pageContext.request.serverName}' + ':' + '${pageContext.request.serverPort}' + '/' + '${pageContext.request.contextPath}' + '/dictionary/createOrChange/';
+
+    function createOrChange(isMainMenu) {
+        let id;
+        if (isMainMenu) {
+            document.location.href = href + $("input[name=firstWidget]:checked")[0].id;
+        } else {
+            id = $("input[name=secondWidget]:checked")[0].id;
+            id = id.substring(0, id.length - 1)
+            document.location.href = href + id;
+        }
+    }
+
+    function remove(isMainMenu) {
+        let id;
+        if (isMainMenu) {
+            id = $("input[name=firstWidget]:checked")[0].id;
+        } else {
+            id = $("input[name=secondWidget]:checked")[0].id;
+            id = id.substring(0, id.length - 1)
+        }
         $.ajax({
-            url: '/dictionary_war_exploded/dictionary/' + id,
+            url: '${pageContext.request.contextPath}/dictionary/' + id,
             method: 'delete',
             dataType: 'json',
             data: {text: 'Текст'},
-            success: function(data){
+            success: function (data) {
                 location.reload()
             }
         });
     }
-    function findByValue(value){
-        $.ajax({
-            url: '/dictionary_war_exploded/dictionary/' + value,
-            method: 'get',
-            dataType: 'html',
-            success: function(data){
-                insertHTML(data)
-            }
-        });
-    }
-    function post(){
-        $.ajax({
-            url: '/dictionary_war_exploded/dictionary/',
-            method: 'post',
-            dataType: 'json',
-            data: {text: 'Текст'},
-            body:{
-                value: 'value',
-                type: 'type',
-                keys: []
-            },
-            success: function(data){
 
-            }
-        });
+    function getByTranslation() {
+        const translation = document.getElementById('inputValue').value;
+        if (translation !== "") {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/dictionary/' + translation,
+                method: 'get',
+                dataType: 'html',
+                success: function (data) {
+                    insertHTML(data)
+                }
+            });
+        }
     }
 
-    function insertHTML(data){
-        var doc=document.getElementById("secForm");
-        doc.insertAdjacentHTML('afterend', data);
+    function getByTranslationAndType() {
+        const translation = document.getElementById('inputValue').value;
+        if (translation !== "") {
+            const type = $("input[name=firstWidget]:checked")[0].defaultValue;
+            if (type !== "") {
+                $.ajax({
+                    url: '${pageContext.request.contextPath}/dictionary/' + translation,
+                    method: 'post',
+                    dataType: 'html',
+                    contentType: 'application/json',
+                    data: type,
+                    success: function (data) {
+                        insertHTML(data)
+                    }
+                });
+            }
+        }
+    }
+
+    function getByWordValue() {
+        const wordValue = document.getElementById('inputValue').value;
+        if (wordValue !== "") {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/dictionary/getByWordValue/' + wordValue,
+                method: 'post',
+                dataType: 'html',
+                contentType: 'application/json',
+                success: function (data) {
+                    insertHTML(data)
+                }
+            });
+        }
+    }
+
+    function insertHTML(data) {
+        document.getElementById("secForm").innerHTML = data;
     }
 </script>
 
 <br/>
 <input id="inputValue" type="text">
-<button onclick="findByValue(document.getElementById('inputValue').value)">find</button>
-<c:forEach var="dictionary" items="${hashMap.entrySet()}">
-<section class="ac-container" id=${dictionary.getKey()}>
-    <c:forEach var="word" items="${dictionary.getValue()}">
-    <div onclick='javascript: selected=${word.getId()}'>
-        <input id="${word.getId()}" name="accordion-1" type="radio" checked />
-        <label for="${word.getId()}">${word}</label>
-        <article>
-            <p>
-            <c:forEach var="value" items="${word.getKeys()}">
-            "${value}"
-            </c:forEach>
-        </p>
-        </article>
-    </div>
-    </c:forEach>
-</section>
+<p>поиск по значению во всех словарях</p>
+<button onclick="getByTranslation()">find</button>
+<p>поиск по значению в выбранном словаре</p>
+<button onclick="getByTranslationAndType()">find</button>
+<p>поиск по ключу в выбранном словаре</p>
+<button onclick="getByWordValue()">find</button>
+<c:forEach var="dictionary" items="${dictionaries.entrySet()}">
+    <section class="ac-container" id=${dictionary.getKey()}>
+        <c:forEach var="word" items="${dictionary.getValue()}">
+
+            <input id="${word.getId()}" name="firstWidget" value="${word.getType()}" type="radio" checked/>
+            <label content="${word.getType()}" for="${word.getId()}">${word.value}</label>
+            <article>
+                <p>
+                    <c:forEach var="value" items="${word.getKeys()}">
+                        "${value.value}"
+                    </c:forEach>
+                </p>
+            </article>
+
+        </c:forEach>
+    </section>
 </c:forEach>
-<section class="ac-container" >
-    <div onclick='javascript: selected=0'>
-    <input id="${0}" name="accordion-1" type="radio" checked />
+<section class="ac-container">
+
+    <input id="${0}" name="firstWidget" type="radio" checked/>
     <label for="${0}">новый ключ</label>
     <article>
         <p>
-                "пусто"
+            "пусто"
         </p>
     </article>
-</div>
+
 </section>
-<button onclick='javascript: document.location.href = "http://localhost:8080/dictionary_war_exploded/dictionary/createOrChange/"+selected;'>edit/add</button>
-<button type="button" class="button-class" onclick="remove(selected)"  value="delete">delete</button>
-<div id="secForm"/>
+<button onclick='createOrChange(true)'>edit/add</button>
+<button type="button" class="button-class" onclick="remove(true)" value="delete">delete</button>
+<div id="secForm"></div>
 </body>
 </html>

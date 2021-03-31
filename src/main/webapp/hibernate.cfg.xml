@@ -14,14 +14,12 @@
         <property name="show_sql">true</property>
         <!-- SQL dialect -->
         <property name="dialect">org.hibernate.dialect.PostgresPlusDialect</property>
-        <property name="hibernate.current_session_context_class">thread</property>
         <property name="hibernate.connection.CharSet">utf8</property>
         <property name="hibernate.connection.characterEncoding">utf8</property>
         <property name="hibernate.connection.useUnicode">true</property>
-<!--        <property name="hibernate.hbm2ddl.auto">create</property>-->
 
-        <mapping class="com.example.dictionary.Entity.Words" />
-        <mapping class="com.example.dictionary.Entity.Value" />
+        <mapping class="com.example.dictionary.entity.Word"/>
+        <mapping class="com.example.dictionary.entity.Translation"/>
 
     </session-factory>
 </hibernate-configuration>

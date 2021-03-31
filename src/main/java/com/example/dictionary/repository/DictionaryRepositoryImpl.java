@@ -1,19 +1,18 @@
 package com.example.dictionary.repository;
 
-import com.example.dictionary.Entity.Value;
-import com.example.dictionary.Entity.Words;
+import com.example.dictionary.entity.Translation;
+import com.example.dictionary.entity.Word;
+import com.example.dictionary.model.TypeOfDictionary;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
+import org.hibernate.criterion.CriteriaSpecification;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Repository
 @Transactional
@@ -22,149 +21,104 @@ public class DictionaryRepositoryImpl implements DictionaryRepository {
     private SessionFactory sessionFactory;
 
     @Override
-    public List<Words> getWordByValue(String value) {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = null;
-        try {
-            transaction = session.beginTransaction();
-            List<Words> words = session.createCriteria(Words.class).createCriteria("keys").add(Restrictions.like("value", value)).list();
-            transaction.commit();
-            return words;
-        } catch (Exception e) {
-            System.out.println(e);
-        } finally {
-            session.close();
-        }
-        return null;
+    public List<Word> getWordsByTranslation(String translation) {
+
+        List<Word> words = currentSession().createCriteria(Word.class)
+                .createCriteria("keys")
+                .add(Restrictions.like("value", translation))
+                .list();
+        return words;
     }
 
     @Override
-    public Words get(Integer id) {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = null;
-        try {
-            transaction = session.beginTransaction();
-            Words words = session.load(Words.class, id);
-            transaction.commit();
-            return words;
-        } catch (Exception e) {
-            System.out.println(e);
-        } finally {
-            session.close();
-        }
-        return null;
+    public Word getWordById(Integer wordId) {
+        return currentSession().get(Word.class, wordId);
     }
 
     @Override
-    public List<Words> getAll() {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = null;
-        try {
-            transaction = session.beginTransaction();
-            List<Words> words = (List<Words>) session.createCriteria(Words.class).list().stream().distinct().collect(Collectors.toList());
-            transaction.commit();
-            return words;
-        } catch (Exception e) {
-            System.out.println(e);
-        } finally {
-            session.close();
-        }
-        return null;
+    public List<Word> getAllWords() {
+        List<Word> words = (List<Word>) currentSession().createCriteria(Word.class)
+                .setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY)
+                .list();
+
+        return words;
     }
 
-    private Integer createNew(Words words, Session session) {
-        if (!words.getKeys().iterator().next().equals("")) {
-            for (Value value:words.getKeys()
-            ) {
-                value.setWords(new LinkedList<Words>());
-                value.getWords().add(words);
-                words.getKeys().add(value);
-                session.save(value);
+    private Session currentSession() {
+        return sessionFactory.getCurrentSession();
+    }
+
+    private Integer createNewWord(Word words, Session session) {
+        for (Translation value : words.getKeys()
+        ) {
+            if (value.getValue().equals("")) {
+                return words.getId();
             }
+            session.save(value);
         }
         session.save(words);
         return words.getId();
     }
 
-    private Integer update(Words words, Session session) {
-        Words word;
-        word = session.load(Words.class, words.getId());
-        word.setValue(words.getValue());
-        word.setType(words.getType());
-        if (!words.getKeys().iterator().next().equals("")) {
-            for (Value value:words.getKeys()
-                 ) {
-                value.setWords(new LinkedList<Words>());
-                value.getWords().add(word);
-                word.getKeys().add(value);
-                session.save(value);
+    private Integer update(Word words, Session session) {
+        Word wordForUpdate;
+        wordForUpdate = session.get(Word.class, words.getId());
+        wordForUpdate.setValue(words.getValue());
+        wordForUpdate.setType(words.getType());
+        for (Translation value : words.getKeys()
+        ) {
+            if (value.getValue().equals("")) {
+                return words.getId();
             }
+            wordForUpdate.getKeys().add(value);
         }
-        session.save(word);
-        return word.getId();
+
+        session.save(wordForUpdate);
+        return wordForUpdate.getId();
     }
 
     @Override
-    public Integer post(Words words) {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = null;
-        Integer id = 0;
-        try {
-            transaction = session.beginTransaction();
-            if (words.getId() != null) {
-                id = update(words, session);
-            } else {
-                id = createNew(words, session);
-            }
-
-            transaction.commit();
-            return id;
-        } catch (Exception e) {
-            System.out.println(e);
-        } finally {
-            session.close();
+    public Integer updateOrCreateWord(Word word) {
+        Integer id;
+        if (word.getId() != null) {
+            id = update(word, currentSession());
+        } else {
+            id = createNewWord(word, currentSession());
         }
-        return null;
+        return id;
     }
 
     @Override
-    public void remove(Integer id) {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = null;
-        try {
-            transaction = session.beginTransaction();
-            session.delete(session.load(Words.class, id));
-            transaction.commit();
-        } catch (Exception e) {
-            System.out.println(e);
-        } finally {
-            session.close();
-        }
-
+    public List<Word> getWordsByTranslationByType(String translation, TypeOfDictionary type) {
+        return currentSession().createCriteria(Word.class).add(Restrictions.like("type", type)).createCriteria("keys")
+                .add(Restrictions.like("value", translation))
+                .list();
     }
 
     @Override
-    public void deleteValueByKey(Integer id, Integer wordId) {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = null;
-        try {
-            transaction = session.beginTransaction();
-            Words words = session.load(Words.class, wordId);
-            Collection<Value> values = words.getKeys();
-            for (Value value : values
-            ) {
-                if (value.getId().equals(id)) {
-                    values.remove(value);
-                    session.save(words);
-                    transaction.commit();
-                    return;
-                }
+    public void deleteWord(Integer wordId) {
+        currentSession().delete(currentSession().get(Word.class, wordId));
+    }
+
+    @Override
+    public void deleteTranslationByWord(Integer translationId, Integer wordId) {
+        Word word = currentSession().get(Word.class, wordId);
+        Collection<Translation> values = word.getKeys();
+        for (Translation value : values
+        ) {
+            if (value.getId().equals(translationId)) {
+                values.remove(value);
+                currentSession().save(word);
+                return;
             }
-            transaction.commit();
-        } catch (Exception e) {
-            System.out.println(e);
-        } finally {
-            session.close();
         }
+    }
+
+    @Override
+    public List<Word> getByWordValue(String value) {
+        return (List<Word>) currentSession().createCriteria(Word.class)
+                .add(Restrictions.like("value", value))
+                .setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY)
+                .list();
     }
 }

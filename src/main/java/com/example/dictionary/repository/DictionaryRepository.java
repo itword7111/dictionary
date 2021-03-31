@@ -1,17 +1,21 @@
 package com.example.dictionary.repository;
 
-import com.example.dictionary.Entity.Words;
+import com.example.dictionary.entity.Word;
+import com.example.dictionary.model.TypeOfDictionary;
 
 import java.util.List;
 
 public interface DictionaryRepository {
-    List<Words> getWordByValue(String value);
-    Words get(Integer id);
+    List<Word> getWordsByTranslation(String translation);
+    Word getWordById(Integer wordId);
 
-    List<Words> getAll();
+    List<Word> getAllWords();
 
-    Integer post(Words words);
+    Integer updateOrCreateWord(Word words);
 
-    void remove(Integer id);
-    void deleteValueByKey(Integer id, Integer wordId);
+    List<Word> getWordsByTranslationByType(String translation, TypeOfDictionary type);
+
+    void deleteWord(Integer wordId);
+    void deleteTranslationByWord(Integer translationId, Integer wordId);
+    List<Word> getByWordValue(String value);
 }
