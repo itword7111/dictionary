@@ -5,8 +5,8 @@ import javax.persistence.*;
 import java.util.Collection;
 
 @Entity
-@Table(name = "words", schema = "dictionary2")
-public class Words {
+@Table(name = "words", schema = "dictionary")
+public class Word {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -16,16 +16,15 @@ public class Words {
     @Column(name = "type")
     private String type;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
-    @JoinTable(schema = "dictionary2", name = "keys", joinColumns = @JoinColumn(name = "keyId"), inverseJoinColumns = @JoinColumn(name = "valueId"))
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
+    @JoinColumn( name = "word_id")
+    private Collection<Translation> keys;
 
-    private Collection<Value> keys;
-
-    public Words() {
+    public Word() {
 
     }
 
-    public Words(String value, String type, Collection<Value> keys) {
+    public Word(String value, String type, Collection<Translation> keys) {
         this.value = value;
         this.type = type;
         this.keys = keys;
@@ -43,7 +42,7 @@ public class Words {
         this.type = type;
     }
 
-    public void setKeys(Collection<Value> keys) {
+    public void setKeys(Collection<Translation> keys) {
         this.keys = keys;
     }
 
@@ -59,18 +58,8 @@ public class Words {
         return type;
     }
 
-    public Collection<Value> getKeys() {
+    public Collection<Translation> getKeys() {
         return keys;
     }
 
-    @Override
-    public String toString() {
-        String ans = value + " ";
-//            ans+=": ";
-//            for (Value s : keys
-//            ) {
-//                ans += s.getValue() + " ";
-//            }
-        return ans;
-    }
 }
