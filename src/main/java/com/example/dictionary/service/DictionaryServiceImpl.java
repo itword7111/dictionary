@@ -1,5 +1,6 @@
 package com.example.dictionary.service;
 
+import com.example.dictionary.entity.Translation;
 import com.example.dictionary.entity.Word;
 import com.example.dictionary.model.TypeOfDictionary;
 import com.example.dictionary.repository.DictionaryRepository;
@@ -17,55 +18,19 @@ public class DictionaryServiceImpl implements DictionaryService {
     private DictionaryValidator validator;
 
     @Override
-    public Map<String, List<Word>> getWordsByTranslation(String translation) {
-        return listToMap(repository.getWordsByTranslation(translation));
-    }
-
-    @Override
-    public Integer updateOrCreateWord(Word word) {
-        if (validator.validation(word.getValue(),word.getTypeEnum())) {
-            return repository.updateOrCreateWord(word);
-        }
-        return 0;
-    }
-
-    @Override
-    public Word getWordById(Integer wordId) {
-        return repository.getWordById(wordId);
-    }
-
-    @Override
-    public Map<String, List<Word>> getAllWords() {
+    public Map<TypeOfDictionary, List<Word>> getAllWords() {
         List<Word> listOfEntry = repository.getAllWords();
 
         return listToMap(listOfEntry);
     }
 
     @Override
-    public List<Word> getWordsByTranslationByType(String translation, String type) {
-        TypeOfDictionary typeOfDictionary=TypeOfDictionary.latin4;
-        for (TypeOfDictionary typeOfDictionaryValue:TypeOfDictionary.values()
-        ) {
-            if(typeOfDictionaryValue.toString().equals(type)){
-                typeOfDictionary=typeOfDictionaryValue;
-                break;
-            }
-        }
-        return repository.getWordsByTranslationByType(translation, typeOfDictionary);
+    public Map<TypeOfDictionary, List<Word>> getWordsByTranslation(String translation, TypeOfDictionary type, String value) {
+        return listToMap(repository.getWordsByTranslation(translation, type, value));
     }
 
-    @Override
-    public void deleteTranslationByWord(Integer translationId, Integer wordId) {
-        repository.deleteTranslationByWord(translationId, wordId);
-    }
-
-    @Override
-    public List<Word> getByWordValue(String value) {
-        return repository.getByWordValue(value);
-    }
-
-    private Map<String, List<Word>> listToMap(List<Word> list) {
-        Map<String, List<Word>> dictionaries = new HashMap<>();
+    private Map<TypeOfDictionary, List<Word>> listToMap(List<Word> list) {
+        Map<TypeOfDictionary, List<Word>> dictionaries = new HashMap<>();
         for (Word word : list
         ) {
             if (!dictionaries.containsKey(word.getType())) {
@@ -78,8 +43,31 @@ public class DictionaryServiceImpl implements DictionaryService {
     }
 
     @Override
+    public Integer updateOrCreateWord(Word word) {
+        if (validator.validation(word.getValue(),word.getType())) {
+            for (Translation value : word.getTranslations()) {
+                if (value.getValue().equals("")) {
+                    return word.getId();
+                }
+            }
+            return repository.updateOrCreateWord(word);
+        }
+        return null;
+    }
+
+    @Override
+    public Word getWordById(Integer wordId) {
+        return repository.getWordById(wordId);
+    }
+
+    @Override
     public void deleteWord(Integer wordId) {
         repository.deleteWord(wordId);
+    }
+
+    @Override
+    public void deleteTranslationByWord(Integer translationId, Integer wordId) {
+        repository.deleteTranslationByWord(translationId, wordId);
     }
 
 }

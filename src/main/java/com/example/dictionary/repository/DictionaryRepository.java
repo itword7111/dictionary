@@ -6,16 +6,16 @@ import com.example.dictionary.model.TypeOfDictionary;
 import java.util.List;
 
 public interface DictionaryRepository {
-    List<Word> getWordsByTranslation(String translation);
-    Word getWordById(Integer wordId);
-
     List<Word> getAllWords();
 
-    Integer updateOrCreateWord(Word words);
+    List<Word> getWordsByTranslation(String translation, TypeOfDictionary type, String wordValue);
 
-    List<Word> getWordsByTranslationByType(String translation, TypeOfDictionary type);
+    Word getWordById(Integer wordId);
+
+    Integer updateOrCreateWord(Word word);
 
     void deleteWord(Integer wordId);
+
     void deleteTranslationByWord(Integer translationId, Integer wordId);
-    List<Word> getByWordValue(String value);
+
 }

@@ -3,6 +3,7 @@ package com.example.dictionary.repository;
 import com.example.dictionary.entity.Translation;
 import com.example.dictionary.entity.Word;
 import com.example.dictionary.model.TypeOfDictionary;
+import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.CriteriaSpecification;
@@ -21,13 +22,31 @@ public class DictionaryRepositoryImpl implements DictionaryRepository {
     private SessionFactory sessionFactory;
 
     @Override
-    public List<Word> getWordsByTranslation(String translation) {
+    public List<Word> getAllWords() {
 
-        List<Word> words = currentSession().createCriteria(Word.class)
-                .createCriteria("keys")
-                .add(Restrictions.like("value", translation))
-                .list();
-        return words;
+        Criteria word = currentSession().createCriteria(Word.class)
+                .setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY);
+
+        return word.list();
+    }
+
+    @Override
+    public List<Word> getWordsByTranslation(String translation, TypeOfDictionary type, String value) {
+        Criteria word = currentSession().createCriteria(Word.class);
+        if (!value.equals("")) {
+            word.add(Restrictions.like("value", value))
+                    .setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY);
+            return word.list();
+        }
+        if(type!=null) {
+            word.add(Restrictions.like("type", type));
+        }
+        if(!translation.equals("")) {
+            word.createCriteria("translations")
+                    .add(Restrictions.like("value", translation));
+        }
+
+        return word.list();
     }
 
     @Override
@@ -35,27 +54,11 @@ public class DictionaryRepositoryImpl implements DictionaryRepository {
         return currentSession().get(Word.class, wordId);
     }
 
-    @Override
-    public List<Word> getAllWords() {
-        List<Word> words = (List<Word>) currentSession().createCriteria(Word.class)
-                .setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY)
-                .list();
-
-        return words;
-    }
-
     private Session currentSession() {
         return sessionFactory.getCurrentSession();
     }
 
     private Integer createNewWord(Word words, Session session) {
-        for (Translation value : words.getKeys()
-        ) {
-            if (value.getValue().equals("")) {
-                return words.getId();
-            }
-            session.save(value);
-        }
         session.save(words);
         return words.getId();
     }
@@ -65,14 +68,7 @@ public class DictionaryRepositoryImpl implements DictionaryRepository {
         wordForUpdate = session.get(Word.class, words.getId());
         wordForUpdate.setValue(words.getValue());
         wordForUpdate.setType(words.getType());
-        for (Translation value : words.getKeys()
-        ) {
-            if (value.getValue().equals("")) {
-                return words.getId();
-            }
-            wordForUpdate.getKeys().add(value);
-        }
-
+        wordForUpdate.getTranslations().addAll(words.getTranslations());
         session.save(wordForUpdate);
         return wordForUpdate.getId();
     }
@@ -88,12 +84,6 @@ public class DictionaryRepositoryImpl implements DictionaryRepository {
         return id;
     }
 
-    @Override
-    public List<Word> getWordsByTranslationByType(String translation, TypeOfDictionary type) {
-        return currentSession().createCriteria(Word.class).add(Restrictions.like("type", type)).createCriteria("keys")
-                .add(Restrictions.like("value", translation))
-                .list();
-    }
 
     @Override
     public void deleteWord(Integer wordId) {
@@ -103,9 +93,8 @@ public class DictionaryRepositoryImpl implements DictionaryRepository {
     @Override
     public void deleteTranslationByWord(Integer translationId, Integer wordId) {
         Word word = currentSession().get(Word.class, wordId);
-        Collection<Translation> values = word.getKeys();
-        for (Translation value : values
-        ) {
+        Collection<Translation> values = word.getTranslations();
+        for (Translation value : values) {
             if (value.getId().equals(translationId)) {
                 values.remove(value);
                 currentSession().save(word);
@@ -114,11 +103,4 @@ public class DictionaryRepositoryImpl implements DictionaryRepository {
         }
     }
 
-    @Override
-    public List<Word> getByWordValue(String value) {
-        return (List<Word>) currentSession().createCriteria(Word.class)
-                .add(Restrictions.like("value", value))
-                .setResultTransformer(CriteriaSpecification.DISTINCT_ROOT_ENTITY)
-                .list();
-    }
 }

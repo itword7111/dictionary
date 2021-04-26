@@ -16,8 +16,8 @@ public class DictionaryValidatorImpl implements DictionaryValidator {
 
     static {
         Map<TypeOfDictionary, String> regexMapInit = new HashMap<>();
-        regexMapInit.put(TypeOfDictionary.latin4, "[A-Za-z]{4}");
-        regexMapInit.put(TypeOfDictionary.arab5, "[0-9]{5}");
+        regexMapInit.put(TypeOfDictionary.LATIN4, "[A-Za-z]{4}");
+        regexMapInit.put(TypeOfDictionary.ARAB5, "[0-9]{5}");
         regexMap = Collections.unmodifiableMap(regexMapInit);
     }
 
